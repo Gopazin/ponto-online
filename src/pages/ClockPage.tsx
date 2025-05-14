@@ -1,20 +1,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import AppLayout from '@/components/AppLayout';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
+import { useTimeEntries } from '@/hooks/useTimeEntries';
 
 type TimeEntryType = 'check-in' | 'break-start' | 'break-end' | 'check-out';
-
-interface TimeEntry {
-  id: string;
-  type: TimeEntryType;
-  timestamp: string;
-  synced: boolean;
-  employeeId: string;
-}
 
 const getButtonColor = (type: TimeEntryType) => {
   switch (type) {
@@ -38,7 +30,7 @@ const getTypeLabel = (type: TimeEntryType): string => {
 
 const ClockPage: React.FC = () => {
   const { user } = useAuth();
-  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
+  const { entries, createTimeEntry } = useTimeEntries(true);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [activeTimeEntryType, setActiveTimeEntryType] = useState<TimeEntryType | null>(null);
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
@@ -66,36 +58,31 @@ const ClockPage: React.FC = () => {
     };
   }, []);
 
-  // Load time entries from local storage
+  // Determine active state based on today's entries
   useEffect(() => {
-    if (!user) return;
-    
-    const storedEntries = localStorage.getItem(`timeEntries_${user.id}`);
-    if (storedEntries) {
-      try {
-        const parsedEntries = JSON.parse(storedEntries);
-        setTimeEntries(parsedEntries);
+    if (entries.length > 0) {
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Filter entries for today and sort by timestamp (newest first)
+      const todayEntries = entries
+        .filter(entry => entry.timestamp.startsWith(today))
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      if (todayEntries.length > 0) {
+        const lastEntry = todayEntries[0];
         
-        // Determine active state based on last entry
-        if (parsedEntries.length > 0) {
-          const lastEntry = parsedEntries[0];
-          const today = new Date().toISOString().split('T')[0];
-          const entryDate = new Date(lastEntry.timestamp).toISOString().split('T')[0];
-          
-          if (today === entryDate) {
-            switch (lastEntry.type) {
-              case 'check-in': setActiveTimeEntryType('check-in'); break;
-              case 'break-start': setActiveTimeEntryType('break-start'); break;
-              case 'break-end': setActiveTimeEntryType('break-end'); break;
-              case 'check-out': setActiveTimeEntryType(null); break;
-            }
-          }
+        switch (lastEntry.type) {
+          case 'check-in': setActiveTimeEntryType('check-in'); break;
+          case 'break-start': setActiveTimeEntryType('break-start'); break;
+          case 'break-end': setActiveTimeEntryType('break-end'); break;
+          case 'check-out': setActiveTimeEntryType(null); break;
+          default: setActiveTimeEntryType(null);
         }
-      } catch (error) {
-        console.error('Failed to parse stored time entries', error);
+      } else {
+        setActiveTimeEntryType(null);
       }
     }
-  }, [user]);
+  }, [entries]);
 
   // Determine which buttons should be enabled based on the current state
   const getEnabledButtons = () => {
@@ -117,36 +104,17 @@ const ClockPage: React.FC = () => {
 
   const buttons = getEnabledButtons();
 
-  const createTimeEntry = (type: TimeEntryType) => {
+  const handleCreateTimeEntry = async (type: TimeEntryType) => {
     if (!user) return;
     
-    const newEntry: TimeEntry = {
-      id: `${Date.now()}`,
-      type,
-      timestamp: new Date().toISOString(),
-      synced: isOnline,
-      employeeId: user.id
-    };
+    const result = await createTimeEntry(type);
     
-    // Add to local state
-    const updatedEntries = [newEntry, ...timeEntries];
-    setTimeEntries(updatedEntries);
-    
-    // Save to local storage
-    localStorage.setItem(`timeEntries_${user.id}`, JSON.stringify(updatedEntries));
-    
-    // Update active state
-    setActiveTimeEntryType(type);
-    
-    // Show success message
-    toast.success(`${getTypeLabel(type)} registrado com sucesso!`);
-    
-    // In a real app, sync with the server if online
-    if (isOnline) {
-      // This would call an API to sync the data
-      console.log('Syncing time entry with server:', newEntry);
-    } else {
-      toast.info('Você está offline. O registro será sincronizado quando a conexão for restabelecida.');
+    if (result) {
+      // Update active state
+      setActiveTimeEntryType(type);
+      
+      // Show success message
+      toast.success(`${getTypeLabel(type)} registrado com sucesso!`);
     }
   };
 
@@ -178,7 +146,7 @@ const ClockPage: React.FC = () => {
   };
 
   // Get recent entries (last 7 days)
-  const recentEntries = timeEntries
+  const recentEntries = entries
     .filter(entry => {
       const entryDate = new Date(entry.timestamp);
       const sevenDaysAgo = new Date();
@@ -188,7 +156,7 @@ const ClockPage: React.FC = () => {
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   // Group entries by date
-  const entriesByDate = recentEntries.reduce<Record<string, TimeEntry[]>>((acc, entry) => {
+  const entriesByDate = recentEntries.reduce<Record<string, typeof entries>>((acc, entry) => {
     const date = new Date(entry.timestamp).toISOString().split('T')[0];
     if (!acc[date]) {
       acc[date] = [];
@@ -217,7 +185,7 @@ const ClockPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <button
-                      onClick={() => createTimeEntry('check-in')}
+                      onClick={() => handleCreateTimeEntry('check-in')}
                       disabled={!buttons.checkIn}
                       className={`clock-button ${getButtonColor('check-in')} ${activeTimeEntryType === 'check-in' ? 'clock-button-active' : ''}`}
                     >
@@ -229,7 +197,7 @@ const ClockPage: React.FC = () => {
                   </div>
                   <div>
                     <button
-                      onClick={() => createTimeEntry('check-out')}
+                      onClick={() => handleCreateTimeEntry('check-out')}
                       disabled={!buttons.checkOut}
                       className={`clock-button ${getButtonColor('check-out')}`}
                     >
@@ -238,7 +206,7 @@ const ClockPage: React.FC = () => {
                   </div>
                   <div>
                     <button
-                      onClick={() => createTimeEntry('break-start')}
+                      onClick={() => handleCreateTimeEntry('break-start')}
                       disabled={!buttons.breakStart}
                       className={`clock-button ${getButtonColor('break-start')} ${activeTimeEntryType === 'break-start' ? 'clock-button-active' : ''}`}
                     >
@@ -251,7 +219,7 @@ const ClockPage: React.FC = () => {
                   </div>
                   <div>
                     <button
-                      onClick={() => createTimeEntry('break-end')}
+                      onClick={() => handleCreateTimeEntry('break-end')}
                       disabled={!buttons.breakEnd}
                       className={`clock-button ${getButtonColor('break-end')}`}
                     >
@@ -293,17 +261,24 @@ const ClockPage: React.FC = () => {
                         {entries.map(entry => (
                           <div key={entry.id} className="time-entry-row">
                             <div>
-                              <span className={`status-badge ${getButtonColor(entry.type)}`}>
-                                {getTypeLabel(entry.type)}
+                              <span className={`status-badge ${getButtonColor(entry.type as TimeEntryType)}`}>
+                                {getTypeLabel(entry.type as TimeEntryType)}
                               </span>
                             </div>
                             <div className="text-sm">
                               {formatTimestamp(entry.timestamp)}
                             </div>
                             <div className="text-right">
-                              <span className={`inline-flex items-center text-xs ${entry.synced ? 'text-green-600' : 'text-amber-600'}`}>
-                                <span className={`w-1.5 h-1.5 rounded-full mr-1 ${entry.synced ? 'bg-green-600' : 'bg-amber-600'}`}></span>
-                                {entry.synced ? 'Sincronizado' : 'Pendente'}
+                              <span className={`inline-flex items-center text-xs ${
+                                entry.status === 'approved' ? 'text-green-600' : 
+                                entry.status === 'rejected' ? 'text-red-600' : 'text-amber-600'
+                              }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full mr-1 ${
+                                  entry.status === 'approved' ? 'bg-green-600' : 
+                                  entry.status === 'rejected' ? 'bg-red-600' : 'bg-amber-600'
+                                }`}></span>
+                                {entry.status === 'approved' ? 'Aprovado' : 
+                                 entry.status === 'rejected' ? 'Rejeitado' : 'Pendente'}
                               </span>
                             </div>
                           </div>

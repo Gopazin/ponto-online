@@ -1,57 +1,48 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/hooks/use-toast";
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardFilters from '@/components/dashboard/DashboardFilters';
 import TimeEntryTable from '@/components/dashboard/TimeEntryTable';
 import DailySummaryTable from '@/components/dashboard/DailySummaryTable';
-import { 
-  generateMockTimeEntries, 
-  getDateOptions,
-  calculateDailySummaries,
-  calculateWorkHourStatistics
-} from '@/utils/timeEntryUtils';
-import { TimeEntry, Employee, DailySummary } from '@/types/timeEntry';
-
-// Mock employees data
-const mockEmployees: Employee[] = [
-  { id: '1', name: 'John Employee', email: 'employee@example.com', role: 'employee', department: 'IT' },
-  { id: '4', name: 'Alice Worker', email: 'alice@example.com', role: 'employee', department: 'Marketing' },
-  { id: '5', name: 'Bob Doer', email: 'bob@example.com', role: 'employee', department: 'Finance' },
-  { id: '6', name: 'Carol Expert', email: 'carol@example.com', role: 'employee', department: 'HR' }
-];
+import { useTimeEntries } from '@/hooks/useTimeEntries';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+import { calculateDailySummaries, calculateWorkHourStatistics, getDateOptions } from '@/utils/timeEntryUtils';
+import { Employee } from '@/types/timeEntry';
 
 const DashboardPage: React.FC = () => {
-  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
-  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
-  const [dailySummaries, setDailySummaries] = useState<DailySummary[]>([]);
-  const [stats, setStats] = useState({ mostHours: { name: '', hours: 0 }, leastHours: { name: '', hours: 0 } });
+  const { profile } = useAuth();
+  const { entries, loading, updateEntryStatus, bulkApprove, refreshEntries } = useTimeEntries(true);
   const dateOptions = getDateOptions();
   
-  useEffect(() => {
-    // Load mock time entries
-    const entries = generateMockTimeEntries(mockEmployees);
-    setTimeEntries(entries);
-    
-    // Calculate daily summaries
-    const summaries = calculateDailySummaries(entries, mockEmployees);
-    setDailySummaries(summaries);
-    
-    // Calculate statistics
-    const statistics = calculateWorkHourStatistics(summaries, mockEmployees);
-    setStats(statistics);
-    
-    // Set default date to today
-    setSelectedDate(new Date().toISOString().slice(0, 10));
-  }, []);
+  // Fetch all employees data
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, name, role, department')
+        .eq('role', 'employee');
+        
+      if (error) {
+        console.error('Error fetching employees:', error);
+        throw error;
+      }
+      
+      return data as Employee[];
+    }
+  });
   
   // Filter time entries based on selected filters
-  const filteredEntries = timeEntries.filter(entry => {
+  const filteredEntries = entries.filter(entry => {
     const matchesEmployee = selectedEmployee === 'all' || entry.employeeId === selectedEmployee;
     
     const entryDate = entry.timestamp.slice(0, 10);
@@ -69,26 +60,24 @@ const DashboardPage: React.FC = () => {
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
   
+  // Calculate daily summaries for the dashboard
+  const dailySummaries = calculateDailySummaries(entries, employees);
+  
+  // Calculate statistics for the dashboard header
+  const stats = calculateWorkHourStatistics(dailySummaries, employees);
+  
+  // Handle approval/rejection of entries
   const handleApprove = (entryId: string) => {
-    setTimeEntries(prevEntries => 
-      prevEntries.map(entry => 
-        entry.id === entryId 
-          ? { ...entry, status: 'approved' } 
-          : entry
-      )
-    );
-    toast.success('Registro aprovado com sucesso!');
+    updateEntryStatus(entryId, 'approved');
   };
   
   const handleReject = (entryId: string) => {
-    setTimeEntries(prevEntries => 
-      prevEntries.map(entry => 
-        entry.id === entryId 
-          ? { ...entry, status: 'rejected' } 
-          : entry
-      )
-    );
-    toast.success('Registro rejeitado com sucesso!');
+    updateEntryStatus(entryId, 'rejected');
+  };
+  
+  // Handle bulk approval of all pending entries
+  const handleBulkApprove = () => {
+    bulkApprove('all');
   };
 
   return (
@@ -97,7 +86,7 @@ const DashboardPage: React.FC = () => {
         <h1 className="text-3xl font-bold mb-6">Painel de Controle</h1>
         
         <DashboardHeader 
-          totalEntries={timeEntries.length}
+          totalEntries={entries.length}
           mostHours={stats.mostHours}
           leastHours={stats.leastHours}
         />
@@ -112,7 +101,7 @@ const DashboardPage: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
               <div className="p-4 border-b border-gray-200">
                 <DashboardFilters
-                  employees={mockEmployees}
+                  employees={employees}
                   dateOptions={dateOptions}
                   selectedEmployee={selectedEmployee}
                   setSelectedEmployee={setSelectedEmployee}
@@ -130,6 +119,7 @@ const DashboardPage: React.FC = () => {
                 entries={sortedEntries}
                 onApprove={handleApprove}
                 onReject={handleReject}
+                onBulkApprove={profile?.role === 'admin' || profile?.role === 'supervisor' ? handleBulkApprove : undefined}
               />
             </div>
           </TabsContent>
@@ -138,7 +128,7 @@ const DashboardPage: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
               <div className="p-4 border-b border-gray-200">
                 <DashboardFilters
-                  employees={mockEmployees}
+                  employees={employees}
                   dateOptions={dateOptions}
                   selectedEmployee={selectedEmployee}
                   setSelectedEmployee={setSelectedEmployee}

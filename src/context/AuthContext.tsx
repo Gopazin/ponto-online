@@ -1,15 +1,17 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 // Define user types
 type UserRole = 'employee' | 'supervisor' | 'admin';
 
-export interface User {
+export interface UserProfile {
   id: string;
-  email: string;
   name: string;
   role: UserRole;
+  department?: string;
   standard_start_time?: string;
   standard_end_time?: string;
   weekly_hours?: number;
@@ -17,100 +19,140 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
+  profile: UserProfile | null;
   isLoading: boolean;
   isInitialized: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string, role?: UserRole) => Promise<void>;
   signOut: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock authentication for now - will be replaced with Supabase when integrated
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
   useEffect(() => {
-    // Check if the user is logged in via localStorage
-    const checkAuth = async () => {
-      const storedUser = localStorage.getItem('timeClockUser');
-      
-      if (storedUser) {
-        try {
-          setUser(JSON.parse(storedUser));
-        } catch (error) {
-          console.error('Failed to parse stored user', error);
-          localStorage.removeItem('timeClockUser');
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, currentSession) => {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        
+        // If session exists, fetch user profile
+        if (currentSession?.user) {
+          setTimeout(() => {
+            fetchUserProfile(currentSession.user.id);
+          }, 0);
+        } else {
+          setProfile(null);
         }
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      
+      // If session exists, fetch user profile
+      if (currentSession?.user) {
+        fetchUserProfile(currentSession.user.id);
       }
       
       setIsInitialized(true);
-    };
+    });
 
-    checkAuth();
+    return () => subscription.unsubscribe();
   }, []);
 
-  // Mock users for development
-  const mockUsers = [
-    {
-      id: '1',
-      email: 'employee@example.com',
-      password: 'password123',
-      name: 'John Employee',
-      role: 'employee' as UserRole,
-      standard_start_time: '09:00',
-      standard_end_time: '18:00',
-      weekly_hours: 40
-    },
-    {
-      id: '2',
-      email: 'supervisor@example.com',
-      password: 'password123',
-      name: 'Jane Supervisor',
-      role: 'supervisor' as UserRole
-    },
-    {
-      id: '3',
-      email: 'admin@example.com',
-      password: 'password123',
-      name: 'Admin User',
-      role: 'admin' as UserRole
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return;
+      }
+
+      setProfile(data as UserProfile);
+    } catch (error) {
+      console.error('Error in fetchUserProfile:', error);
     }
-  ];
+  };
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
     
     try {
-      // Mock authentication - will be replaced with Supabase
-      const user = mockUsers.find(u => u.email === email && u.password === password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      if (user) {
-        // Remove password before storing
-        const { password, ...safeUser } = user;
-        localStorage.setItem('timeClockUser', JSON.stringify(safeUser));
-        setUser(safeUser);
-        toast.success(`Bem-vindo, ${safeUser.name}!`);
-      } else {
+      if (error) {
         toast.error('Email ou senha inválidos');
+        throw error;
       }
+      
+      toast.success(`Bem-vindo de volta!`);
     } catch (error) {
+      console.error('Error during sign in:', error);
       toast.error('Erro ao fazer login');
-      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const signOut = () => {
-    localStorage.removeItem('timeClockUser');
-    setUser(null);
-    toast.info('Sessão encerrada');
+  const signUp = async (email: string, password: string, name: string, role: UserRole = 'employee') => {
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            role
+          }
+        }
+      });
+      
+      if (error) {
+        toast.error('Erro ao criar conta');
+        throw error;
+      }
+      
+      toast.success('Conta criada com sucesso!');
+    } catch (error) {
+      console.error('Error during sign up:', error);
+      toast.error('Erro ao criar conta');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.info('Sessão encerrada');
+    } catch (error) {
+      console.error('Error during sign out:', error);
+      toast.error('Erro ao encerrar sessão');
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isInitialized, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, isLoading, isInitialized, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );

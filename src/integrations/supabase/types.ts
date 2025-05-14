@@ -9,7 +9,75 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          id: string
+          name: string
+          role: string
+          standard_end_time: string | null
+          standard_start_time: string | null
+          updated_at: string | null
+          weekly_hours: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          id: string
+          name: string
+          role?: string
+          standard_end_time?: string | null
+          standard_start_time?: string | null
+          updated_at?: string | null
+          weekly_hours?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          id?: string
+          name?: string
+          role?: string
+          standard_end_time?: string | null
+          standard_start_time?: string | null
+          updated_at?: string | null
+          weekly_hours?: number | null
+        }
+        Relationships: []
+      }
+      time_entries: {
+        Row: {
+          approved_by: string | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          status: string
+          timestamp: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          approved_by?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          timestamp?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          approved_by?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          timestamp?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -7,9 +7,15 @@ interface TimeEntryTableProps {
   entries: TimeEntry[];
   onApprove: (entryId: string) => void;
   onReject: (entryId: string) => void;
+  onBulkApprove?: () => void;
 }
 
-const TimeEntryTable: React.FC<TimeEntryTableProps> = ({ entries, onApprove, onReject }) => {
+const TimeEntryTable: React.FC<TimeEntryTableProps> = ({ 
+  entries, 
+  onApprove, 
+  onReject,
+  onBulkApprove
+}) => {
   
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -39,8 +45,23 @@ const TimeEntryTable: React.FC<TimeEntryTableProps> = ({ entries, onApprove, onR
     }
   };
 
+  // Count pending entries
+  const pendingEntries = entries.filter(entry => entry.status === 'pending').length;
+
   return (
     <div className="overflow-x-auto">
+      {pendingEntries > 0 && onBulkApprove && (
+        <div className="p-4 flex justify-end">
+          <Button 
+            onClick={onBulkApprove}
+            variant="default"
+            className="bg-green-600 hover:bg-green-700"
+          >
+            Aprovar Todos ({pendingEntries})
+          </Button>
+        </div>
+      )}
+      
       <table className="w-full">
         <thead>
           <tr className="bg-gray-50 border-b border-gray-200">
