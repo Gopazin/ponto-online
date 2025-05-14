@@ -11,7 +11,6 @@ type ToasterToast = ToastT & {
   description?: React.ReactNode
   action?: React.ReactNode
   variant?: "default" | "destructive"
-  // Remova explicitamente 'type' da interface se não for usado pelo Toast do Radix
 }
 
 const actionTypes = {
