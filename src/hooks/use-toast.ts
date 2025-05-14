@@ -10,6 +10,7 @@ type ToasterToast = ToastT & {
   title?: React.ReactNode
   description?: React.ReactNode
   action?: React.ReactNode
+  variant?: "default" | "destructive"
 }
 
 const actionTypes = {
@@ -81,7 +82,6 @@ function reducer(state: State, action: Action): State {
           ...state,
           toasts: state.toasts.map((t) => ({
             ...t,
-            open: false,
           })),
         }
       }
@@ -90,7 +90,7 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         toasts: state.toasts.map((t) =>
-          t.id === toastId ? { ...t, open: false } : t
+          t.id === toastId ? { ...t } : t
         ),
       }
     }
@@ -158,10 +158,6 @@ function toast({
       description,
       variant: variant || "default",
       ...props,
-      open: true,
-      onOpenChange: (open) => {
-        if (!open) dismiss()
-      },
     },
   })
 
@@ -171,6 +167,43 @@ function toast({
     update,
   }
 }
+
+// Métodos de conveniência para o toast
+const success = (message: string) => {
+  sonnerToast.success(message);
+  return toast({ 
+    title: "Sucesso",
+    description: message,
+    variant: "default" 
+  });
+};
+
+const error = (message: string) => {
+  sonnerToast.error(message);
+  return toast({ 
+    title: "Erro",
+    description: message,
+    variant: "destructive" 
+  });
+};
+
+const warning = (message: string) => {
+  sonnerToast.warning(message);
+  return toast({ 
+    title: "Aviso",
+    description: message,
+    variant: "default" 
+  });
+};
+
+const info = (message: string) => {
+  sonnerToast.info(message);
+  return toast({ 
+    title: "Informação",
+    description: message,
+    variant: "default" 
+  });
+};
 
 export function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
@@ -192,5 +225,11 @@ export function useToast() {
     sonnerToast,
   }
 }
+
+// Adiciona os métodos de conveniência ao objeto toast
+toast.success = success;
+toast.error = error;
+toast.warning = warning;
+toast.info = info;
 
 export { toast }
