@@ -1,3 +1,3 @@
 
-export * from './toast/use-toast';
-export * from './toast/types';
+export * from '@/components/ui/use-toast';
+export * from '@/hooks/toast/types';

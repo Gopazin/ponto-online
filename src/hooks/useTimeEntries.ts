@@ -35,14 +35,14 @@ export const useTimeEntries = (refresh = false) => {
         return;
       }
       
-      // Map the Supabase data to our TimeEntry interface
+      // Map the Supabase data to our TimeEntry interface with proper type assertions
       const timeEntries: TimeEntry[] = data.map(entry => ({
         id: entry.id,
         employeeId: entry.user_id,
         employeeName: entry.user_id, // Will be replaced with real name later
-        type: entry.type,
+        type: entry.type as 'check-in' | 'check-out' | 'break-start' | 'break-end',
         timestamp: entry.timestamp,
-        status: entry.status,
+        status: entry.status as 'pending' | 'approved' | 'rejected',
         notes: entry.notes
       }));
       
@@ -112,9 +112,9 @@ export const useTimeEntries = (refresh = false) => {
         id: data.id,
         employeeId: data.user_id,
         employeeName: profile?.name || 'Unknown',
-        type: data.type,
+        type: data.type as 'check-in' | 'check-out' | 'break-start' | 'break-end',
         timestamp: data.timestamp,
-        status: data.status,
+        status: data.status as 'pending' | 'approved' | 'rejected',
         notes: data.notes
       };
       

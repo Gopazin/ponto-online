@@ -9,7 +9,7 @@ interface AppLayoutProps {
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = () => {
@@ -45,7 +45,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link 
-              to={user?.role === 'employee' ? '/clock' : '/dashboard'} 
+              to={profile?.role === 'employee' ? '/clock' : '/dashboard'} 
               className="text-xl font-bold text-primary"
             >
               Registro de Ponto
@@ -56,7 +56,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </div>
           <div className="flex items-center space-x-4">
             <div className="text-sm font-medium mr-2">
-              {user?.name} ({user?.role === 'employee' ? 'Funcionário' : user?.role === 'supervisor' ? 'Supervisor' : 'Admin'})
+              {profile?.name} ({profile?.role === 'employee' ? 'Funcionário' : profile?.role === 'supervisor' ? 'Supervisor' : 'Admin'})
             </div>
             <Button 
               variant="ghost" 
