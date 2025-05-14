@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -393,7 +392,7 @@ const DashboardPage: React.FC = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          <SelectItem value="">Todas as datas</SelectItem>
+                          <SelectItem value="none">Todas as datas</SelectItem>
                           {dateOptions.map(option => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
@@ -561,7 +560,7 @@ const DashboardPage: React.FC = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          <SelectItem value="">Todas as datas</SelectItem>
+                          <SelectItem value="none">Todas as datas</SelectItem>
                           {dateOptions.map(option => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
