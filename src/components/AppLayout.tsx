@@ -39,6 +39,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     return () => clearInterval(interval);
   }, []);
 
+  // Função para obter o nome traduzido do papel
+  const getRoleName = (roleType: string | undefined) => {
+    switch(roleType) {
+      case 'employee': return 'Colaborador';
+      case 'supervisor': return 'Gestor';
+      case 'admin': return 'Administrador';
+      default: return 'Usuário';
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <header className="bg-white border-b border-gray-200 shadow-sm">
@@ -56,7 +66,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </div>
           <div className="flex items-center space-x-4">
             <div className="text-sm font-medium mr-2">
-              {profile?.name} ({profile?.role === 'employee' ? 'Funcionário' : profile?.role === 'supervisor' ? 'Supervisor' : 'Admin'})
+              {profile?.name} ({getRoleName(profile?.role)})
             </div>
             <Button 
               variant="ghost" 

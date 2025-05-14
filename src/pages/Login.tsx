@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/context/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
 const Login = () => {
   // Login state
@@ -16,6 +18,8 @@ const Login = () => {
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
   const [name, setName] = useState('');
+  const [role, setRole] = useState('employee');
+  const [adminCode, setAdminCode] = useState('');
   
   const { signIn, signUp, user, profile, isLoading } = useAuth();
 
@@ -26,7 +30,31 @@ const Login = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    await signUp(registerEmail, registerPassword, name);
+    
+    // Verificar o código de acesso para perfis de Gestor e Administrador
+    if (role !== 'employee') {
+      const accessCodes = {
+        supervisor: 'gestor123',
+        admin: 'admin456'
+      };
+      
+      if (adminCode !== accessCodes[role as 'supervisor' | 'admin']) {
+        toast.error('Código de acesso inválido para este perfil');
+        return;
+      }
+    }
+    
+    await signUp(registerEmail, registerPassword, name, role);
+  };
+
+  // Função para obter o nome traduzido do papel
+  const getRoleName = (roleType: string) => {
+    switch(roleType) {
+      case 'employee': return 'Colaborador';
+      case 'supervisor': return 'Gestor';
+      case 'admin': return 'Administrador';
+      default: return roleType;
+    }
   };
 
   // Redirect if already logged in
@@ -133,6 +161,39 @@ const Login = () => {
                       required
                     />
                   </div>
+                  <div className="space-y-2">
+                    <label htmlFor="register-role" className="text-sm font-medium">Perfil</label>
+                    <Select 
+                      value={role} 
+                      onValueChange={setRole}
+                    >
+                      <SelectTrigger id="register-role">
+                        <SelectValue placeholder="Selecione um perfil" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="employee">Colaborador</SelectItem>
+                        <SelectItem value="supervisor">Gestor</SelectItem>
+                        <SelectItem value="admin">Administrador</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {role !== 'employee' && (
+                    <div className="space-y-2">
+                      <label htmlFor="admin-code" className="text-sm font-medium">Código de Acesso</label>
+                      <Input
+                        id="admin-code"
+                        type="password"
+                        placeholder="Código para perfis especiais"
+                        value={adminCode}
+                        onChange={(e) => setAdminCode(e.target.value)}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Necessário para cadastro como Gestor ou Administrador.
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
                 <CardFooter>
                   <Button 
@@ -151,6 +212,7 @@ const Login = () => {
         <div className="mt-6 text-center text-sm text-muted-foreground">
           <p>Para teste, você pode criar uma conta ou usar as credenciais de exemplo.</p>
           <p className="mt-2">Se criar uma conta, não é necessário confirmar o e-mail durante o desenvolvimento.</p>
+          <p className="mt-2">Códigos de acesso para teste: Gestor (gestor123), Administrador (admin456)</p>
         </div>
       </div>
     </div>
