@@ -66,6 +66,14 @@ const Login = () => {
     }
   }
 
+  // Function to handle role changes safely with type checking
+  const handleRoleChange = (value: string) => {
+    // Only set the role if it matches one of our allowed types
+    if (value === 'employee' || value === 'supervisor' || value === 'admin') {
+      setRole(value);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
@@ -165,7 +173,7 @@ const Login = () => {
                     <label htmlFor="register-role" className="text-sm font-medium">Perfil</label>
                     <Select 
                       value={role} 
-                      onValueChange={setRole}
+                      onValueChange={handleRoleChange}
                     >
                       <SelectTrigger id="register-role">
                         <SelectValue placeholder="Selecione um perfil" />
