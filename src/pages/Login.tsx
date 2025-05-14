@@ -18,7 +18,7 @@ const Login = () => {
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
   const [name, setName] = useState('');
-  const [role, setRole] = useState('employee');
+  const [role, setRole] = useState<'employee' | 'supervisor' | 'admin'>('employee');
   const [adminCode, setAdminCode] = useState('');
   
   const { signIn, signUp, user, profile, isLoading } = useAuth();
@@ -38,7 +38,7 @@ const Login = () => {
         admin: 'admin456'
       };
       
-      if (adminCode !== accessCodes[role as 'supervisor' | 'admin']) {
+      if (adminCode !== accessCodes[role]) {
         toast.error('Código de acesso inválido para este perfil');
         return;
       }
