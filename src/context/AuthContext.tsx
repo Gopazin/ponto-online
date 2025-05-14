@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { cleanupAuthState } from '@/utils/auth-cleanup';
 
 // Define user types
 type UserRole = 'employee' | 'supervisor' | 'admin';
@@ -45,6 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // If session exists, fetch user profile
         if (currentSession?.user) {
+          // Use setTimeout to prevent potential deadlocks
           setTimeout(() => {
             fetchUserProfile(currentSession.user.id);
           }, 0);
@@ -93,6 +95,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
+      // Clean up existing auth state first
+      cleanupAuthState();
+      
+      // Try to sign out globally before signing in (prevents auth conflicts)
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -116,6 +128,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
+      // Clean up existing auth state first
+      cleanupAuthState();
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -143,8 +158,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
-      toast.info('Sessão encerrada');
+      // Clean up auth state
+      cleanupAuthState();
+      
+      // Attempt global sign out (fallback if it fails)
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Ignore errors
+      }
+      
+      // Force page reload for a clean state
+      window.location.href = '/';
     } catch (error) {
       console.error('Error during sign out:', error);
       toast.error('Erro ao encerrar sessão');
