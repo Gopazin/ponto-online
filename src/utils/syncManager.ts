@@ -43,7 +43,7 @@ export const syncTimeEntries = async (userId: string): Promise<void> => {
  * Register an online/offline event handler to sync data when connection is restored
  * @param userId The user ID to sync entries for
  */
-export const registerSyncEvents = (userId: string): void => {
+export const registerSyncEvents = (userId: string): () => void => {
   const handleOnline = () => {
     console.log('Connection restored, syncing data...');
     syncTimeEntries(userId);

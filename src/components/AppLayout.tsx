@@ -1,4 +1,5 @@
 
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
@@ -28,9 +29,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     });
   };
 
-  const [currentTime, setCurrentTime] = React.useState(getCurrentTime());
+  const [currentTime, setCurrentTime] = useState(getCurrentTime());
 
-  React.useEffect(() => {
+  useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(getCurrentTime());
     }, 1000);
