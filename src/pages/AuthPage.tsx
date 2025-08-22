@@ -6,47 +6,36 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useAuth } from '@/context/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 
 const AuthPage = () => {
   // Login state
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   
   // Registration state
-  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerUsername, setRegisterUsername] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [name, setName] = useState('');
   const [role, setRole] = useState<'employee' | 'supervisor' | 'admin'>('employee');
-  const [adminCode, setAdminCode] = useState('');
   
   const { signIn, signUp, user, profile, isLoading } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Gerar email interno baseado no username
+    const email = `${username}@empresa.local`;
     await signIn(email, password);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Verificar o código de acesso para perfis de Gestor e Administrador
-    if (role !== 'employee') {
-      const accessCodes = {
-        supervisor: 'gestor123',
-        admin: 'admin456'
-      };
-      
-      if (adminCode !== accessCodes[role]) {
-        toast.error('Código de acesso inválido para este perfil');
-        return;
-      }
-    }
-    
-    await signUp(registerEmail, registerPassword, name, role);
+    // Gerar email interno baseado no username
+    const email = `${registerUsername}@empresa.local`;
+    await signUp(email, registerPassword, name, role);
   };
 
   // Function to handle role changes safely with type checking
@@ -69,18 +58,6 @@ const AuthPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-secondary/20 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Back to home button */}
-        <Button 
-          asChild 
-          variant="ghost" 
-          size="sm" 
-          className="mb-6 hover:bg-muted/50"
-        >
-          <Link to="/" className="flex items-center gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Voltar ao início
-          </Link>
-        </Button>
 
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
@@ -107,15 +84,15 @@ const AuthPage = () => {
               <form onSubmit={handleLogin}>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <label htmlFor="email" className="text-sm font-medium">
-                      Email
+                    <label htmlFor="username" className="text-sm font-medium">
+                      Nome de Usuário
                     </label>
                     <Input
-                      id="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      id="username"
+                      type="text"
+                      placeholder="seu_usuario"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
                       required
                       className="transition-all focus:ring-2"
                     />
@@ -186,15 +163,15 @@ const AuthPage = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label htmlFor="register-email" className="text-sm font-medium">
-                      Email
+                    <label htmlFor="register-username" className="text-sm font-medium">
+                      Nome de Usuário
                     </label>
                     <Input
-                      id="register-email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={registerEmail}
-                      onChange={(e) => setRegisterEmail(e.target.value)}
+                      id="register-username"
+                      type="text"
+                      placeholder="seu_usuario"
+                      value={registerUsername}
+                      onChange={(e) => setRegisterUsername(e.target.value)}
                       required
                       className="transition-all focus:ring-2"
                     />
@@ -246,26 +223,6 @@ const AuthPage = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
-                  {role !== 'employee' && (
-                    <div className="space-y-2 animate-fade-in">
-                      <label htmlFor="admin-code" className="text-sm font-medium">
-                        Código de Acesso
-                      </label>
-                      <Input
-                        id="admin-code"
-                        type="password"
-                        placeholder="Código para perfis especiais"
-                        value={adminCode}
-                        onChange={(e) => setAdminCode(e.target.value)}
-                        required
-                        className="transition-all focus:ring-2"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        💡 Necessário para cadastro como Gestor ou Administrador
-                      </p>
-                    </div>
-                  )}
                 </CardContent>
                 <CardFooter>
                   <Button 
@@ -292,13 +249,9 @@ const AuthPage = () => {
         <Card className="mt-6 bg-muted/50 border-muted">
           <CardContent className="pt-6">
             <div className="text-center text-sm text-muted-foreground space-y-2">
-              <p className="font-medium">💡 Para testes rápidos:</p>
-              <p>Crie uma conta - não é necessário confirmar email</p>
-              <div className="pt-2 space-y-1">
-                <p><strong>Códigos de acesso:</strong></p>
-                <p>🏢 Gestor: <code className="bg-muted px-1 rounded">gestor123</code></p>
-                <p>⚙️ Administrador: <code className="bg-muted px-1 rounded">admin456</code></p>
-              </div>
+              <p className="font-medium">💡 Como usar:</p>
+              <p>Escolha um nome de usuário e senha para criar sua conta</p>
+              <p>Selecione o perfil adequado: Colaborador, Gestor ou Administrador</p>
             </div>
           </CardContent>
         </Card>
