@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Index from "./pages/Index";
+
 import AuthPage from "./pages/AuthPage";
 import ClockPage from "./pages/ClockPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -31,7 +31,7 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               {/* Public Routes */}
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<AuthPage />} />
               <Route path="/auth" element={<AuthPage />} />
               
               {/* Protected Employee Routes */}
