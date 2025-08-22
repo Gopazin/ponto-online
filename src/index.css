@@ -34,6 +34,19 @@
     --ring: 221.2 83% 53.3%;
 
     --radius: 0.5rem;
+    
+    /* Status colors */
+    --status-check-in: 142 76% 36%;     /* Green */
+    --status-break: 38 92% 50%;         /* Yellow/orange */
+    --status-check-out: 0 84% 60%;      /* Red */
+    --status-pending: 220 14% 60%;      /* Gray */
+    --status-approved: 142 76% 36%;     /* Green */
+    --status-rejected: 0 84% 60%;       /* Red */
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(221.2 83% 63.3%));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--accent)));
+    --gradient-hero: linear-gradient(135deg, hsl(221.2 83% 53.3%), hsl(262 83% 53.3%), hsl(293 83% 53.3%));
   }
 
   .dark {
@@ -43,7 +56,7 @@
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 0 0% 3%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 217.2 91.2% 59.8%;
@@ -64,6 +77,19 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
+    
+    /* Status colors for dark mode */
+    --status-check-in: 142 76% 36%;
+    --status-break: 38 92% 50%;
+    --status-check-out: 0 84% 60%;
+    --status-pending: 220 14% 40%;
+    --status-approved: 142 76% 36%;
+    --status-rejected: 0 84% 60%;
+    
+    /* Dark mode gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(217.2 91.2% 69.8%));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--accent)));
+    --gradient-hero: linear-gradient(135deg, hsl(217.2 91.2% 59.8%), hsl(262 91.2% 59.8%), hsl(293 91.2% 59.8%));
   }
 }
 
@@ -80,7 +106,7 @@
 
 @layer components {
   .clock-button {
-    @apply relative flex flex-col items-center justify-center w-32 h-32 md:w-36 md:h-36 text-white rounded-full shadow-lg transition-all duration-200 hover:scale-105 active:scale-95;
+    @apply relative flex flex-col items-center justify-center w-32 h-32 md:w-36 md:h-36 text-primary-foreground rounded-full shadow-lg transition-all duration-200 hover:scale-105 active:scale-95;
   }
 
   .clock-button-active {
@@ -88,14 +114,14 @@
   }
   
   .time-entry-row {
-    @apply grid grid-cols-3 md:grid-cols-4 gap-2 p-3 border-b border-gray-100 items-center;
+    @apply grid grid-cols-3 md:grid-cols-4 gap-2 p-3 border-b border-border items-center;
   }
 
   .status-badge {
-    @apply px-2 py-1 rounded-full text-xs font-medium text-white;
+    @apply px-2 py-1 rounded-full text-xs font-medium text-primary-foreground;
   }
 
   .dashboard-card {
-    @apply bg-white rounded-lg shadow-md p-4 border border-gray-100;
+    @apply bg-card rounded-lg shadow-md p-4 border border-border;
   }
 }

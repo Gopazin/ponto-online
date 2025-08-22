@@ -19,6 +19,9 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -63,14 +66,14 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Custom colors for timesheet status
+				// Fixed status colors using HSL tokens
 				status: {
-					'check-in': '#22c55e',    // Green
-					'break': '#f59e0b',       // Yellow/orange
-					'check-out': '#ef4444',   // Red
-					'pending': '#9ca3af',     // Gray
-					'approved': '#22c55e',    // Green
-					'rejected': '#ef4444',    // Red
+					'check-in': 'hsl(var(--status-check-in))',
+					'break': 'hsl(var(--status-break))',
+					'check-out': 'hsl(var(--status-check-out))',
+					'pending': 'hsl(var(--status-pending))',
+					'approved': 'hsl(var(--status-approved))',
+					'rejected': 'hsl(var(--status-rejected))',
 				}
 			},
 			borderRadius: {
@@ -98,12 +101,23 @@ export default {
 				'pulse-scale': {
 					'0%, 100%': { transform: 'scale(1)' },
 					'50%': { transform: 'scale(1.05)' },
+				},
+				'fade-in': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(10px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'pulse-scale': 'pulse-scale 2s infinite'
+				'pulse-scale': 'pulse-scale 2s infinite',
+				'fade-in': 'fade-in 0.6s ease-out'
 			}
 		}
 	},
